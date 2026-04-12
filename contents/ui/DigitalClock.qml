@@ -176,7 +176,8 @@ MouseArea {
             AnchorChanges {
                 target: labelsGrid
 
-                anchors.horizontalCenter: contentItem.horizontalCenter
+                anchors.right: contentItem.right
+                anchors.horizontalCenter: undefined
             }
 
             PropertyChanges {
@@ -211,7 +212,8 @@ MouseArea {
                 target: dateLabel
 
                 anchors.top: labelsGrid.bottom
-                anchors.horizontalCenter: labelsGrid.horizontalCenter
+                anchors.right: labelsGrid.right
+                anchors.horizontalCenter: undefined
             }
 
             PropertyChanges {
@@ -297,7 +299,7 @@ MouseArea {
                 width: timeZoneLabel.paintedWidth
 
                 fontSizeMode: Text.VerticalFit
-                horizontalAlignment: Text.AlignHCenter
+                horizontalAlignment: Text.AlignRight
             }
 
             PropertyChanges {
@@ -376,7 +378,8 @@ MouseArea {
                 target: dateLabel
 
                 anchors.top: labelsGrid.bottom
-                anchors.horizontalCenter: labelsGrid.horizontalCenter
+                anchors.right: labelsGrid.right
+                anchors.horizontalCenter: undefined
             }
 
             PropertyChanges {
@@ -450,7 +453,8 @@ MouseArea {
                 target: dateLabel
 
                 anchors.top: labelsGrid.bottom
-                anchors.horizontalCenter: labelsGrid.horizontalCenter
+                anchors.right: labelsGrid.right
+                anchors.horizontalCenter: undefined
             }
 
             PropertyChanges {
@@ -511,8 +515,8 @@ MouseArea {
         }
     }
 
-    FontMetrics { id: fmTime; font.family: timeLabel.font.family; font.weight: timeLabel.font.weight; font.italic: timeLabel.font.italic; font.pixelSize: timeLabel.font.pixelSize }
-    FontMetrics { id: fmDate; font.family: dateLabel.font.family; font.weight: dateLabel.font.weight; font.italic: dateLabel.font.italic; font.pixelSize: dateLabel.font.pixelSize }
+    FontMetrics { id: fmTime; font.family: timeLabel.font.family; font.weight: timeLabel.font.weight; font.italic: timeLabel.font.italic; font.styleName: timeLabel.font.styleName; font.pixelSize: timeLabel.font.pixelSize }
+    FontMetrics { id: fmDate; font.family: dateLabel.font.family; font.weight: dateLabel.font.weight; font.italic: dateLabel.font.italic; font.styleName: dateLabel.font.styleName; font.pixelSize: dateLabel.font.pixelSize }
 
     /*
      * Visible elements
@@ -527,7 +531,7 @@ MouseArea {
             id: labelsGrid
 
             rows: 1
-            horizontalItemAlignment: Grid.AlignHCenter
+            horizontalItemAlignment: Grid.AlignRight
             verticalItemAlignment: Grid.AlignVCenter
 
             flow: Grid.TopToBottom
@@ -542,7 +546,6 @@ MouseArea {
                     family: fontHelper.font.family
                     weight: fontHelper.font.weight
                     italic: fontHelper.font.italic
-                    features: { "tnum": 1 }
                     pixelSize: 1024
                 }
                 minimumPixelSize: 1
@@ -551,7 +554,7 @@ MouseArea {
                 textFormat: Text.PlainText
 
                 verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignHCenter
+                horizontalAlignment: Text.AlignRight
             }
 
             PlasmaComponents.Label {
@@ -563,7 +566,7 @@ MouseArea {
                 minimumPixelSize: 1
 
                 visible: text.length > 0
-                horizontalAlignment: Text.AlignHCenter
+                horizontalAlignment: Text.AlignRight
                 verticalAlignment: Text.AlignVCenter
                 textFormat: Text.PlainText
             }
@@ -599,7 +602,7 @@ MouseArea {
             font.pixelSize: 1024
             minimumPixelSize: 1
 
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             textFormat: Text.PlainText
         }
@@ -615,6 +618,7 @@ MouseArea {
         font.family: timeLabel.font.family
         font.weight: timeLabel.font.weight
         font.italic: timeLabel.font.italic
+        font.styleName: timeLabel.font.styleName
         minimumPixelSize: 1
 
         visible: false
@@ -628,9 +632,10 @@ MouseArea {
         height: 1024
 
         font.family: (Plasmoid.configuration.autoFontAndSize || Plasmoid.configuration.fontFamily.length === 0) ? Kirigami.Theme.defaultFont.family : Plasmoid.configuration.fontFamily
+        font.styleName: Plasmoid.configuration.autoFontAndSize ? "" : Plasmoid.configuration.fontStyleName
         font.weight: Plasmoid.configuration.autoFontAndSize ? Kirigami.Theme.defaultFont.weight : Plasmoid.configuration.fontWeight
         font.italic: Plasmoid.configuration.autoFontAndSize ? Kirigami.Theme.defaultFont.italic : Plasmoid.configuration.italicText
-        font.pixelSize: Plasmoid.configuration.autoFontAndSize ? pointToPixel(9) : pointToPixel(Plasmoid.configuration.fontSize) // Use smaller font size by default
+        font.pointSize: Plasmoid.configuration.autoFontAndSize ? 9 : Plasmoid.configuration.fontSize
         fontSizeMode: Text.VerticalFit
 
         visible: false
@@ -643,6 +648,7 @@ MouseArea {
         font.family: timeLabel.font.family
         font.weight: timeLabel.font.weight
         font.italic: timeLabel.font.italic
+        font.styleName: timeLabel.font.styleName
 
         font.pixelSize: dateLabel.contentHeight
     }

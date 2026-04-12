@@ -86,7 +86,6 @@ Item {
             text: tooltipMaintext.anyTimezoneSet ? subText : i18nc("@label sub text shown in digital clock's tooltip when timezone is missing", "Click the clock icon to open Date & Time settings and set a time zone.")
             opacity: 0.75
             visible: !clocks.visible
-            font.features: { "tnum": 1 }
         }
 
         PlasmaComponents.Label {
@@ -135,13 +134,6 @@ Item {
                     }
                     textFormat: Text.PlainText
                     font.weight: root.timeZoneResolvesToLastSelectedTimeZone(modelData) ? Font.Bold : Font.Normal
-                    font.features: {
-                        if (index % 2 === 1) {
-                            return { "tnum": 1 }
-                        } else {
-                            return {}
-                        }
-                    }
                     wrapMode: Text.NoWrap
                     elide: Text.ElideNone
                 }

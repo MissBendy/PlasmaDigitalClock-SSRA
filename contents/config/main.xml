@@ -49,7 +49,7 @@
     </entry>
     <entry name="fontWeight" type="Int">
       <label>Sets font weight.</label>
-      <default>50</default>
+      <default>400</default>
     </entry>
     <entry name="fontStyleName" type="string">
       <label>Sets font style </label>

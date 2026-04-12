@@ -24,15 +24,22 @@ KCMUtils.SimpleKCM {
     id: appearancePage
     property alias cfg_autoFontAndSize: autoFontAndSizeRadioButton.checked
 
-    // boldText and fontStyleName are not used in DigitalClock.qml
-    // However, they are necessary to remember the exact font style chosen.
-    // Otherwise, when the user open the font dialog again, the style will be lost.
-    property alias cfg_fontFamily: fontDialog.fontChosen.family
-    property alias cfg_boldText: fontDialog.fontChosen.bold
-    property alias cfg_italicText: fontDialog.fontChosen.italic
-    property alias cfg_fontWeight: fontDialog.fontChosen.weight
-    property alias cfg_fontStyleName: fontDialog.fontChosen.styleName
-    property alias cfg_fontSize: fontDialog.fontChosen.pointSize
+    // Use QtObject intermediaries instead of aliasing into font sub-properties.
+    // In Qt6, property alias into sub-properties of a font value type is unreliable --
+    // notifications don't propagate, so cfg_* values never actually update.
+    QtObject { id: cfgFontFamily;    property string value: "" }
+    QtObject { id: cfgFontWeight;    property int    value: Qt.application.font.weight }
+    QtObject { id: cfgFontSize;      property int    value: Qt.application.font.pointSize }
+    QtObject { id: cfgBoldText;      property bool   value: false }
+    QtObject { id: cfgItalicText;    property bool   value: false }
+    QtObject { id: cfgFontStyleName; property string value: "" }
+
+    property alias cfg_fontFamily:    cfgFontFamily.value
+    property alias cfg_fontWeight:    cfgFontWeight.value
+    property alias cfg_fontSize:      cfgFontSize.value
+    property alias cfg_boldText:      cfgBoldText.value
+    property alias cfg_italicText:    cfgItalicText.value
+    property alias cfg_fontStyleName: cfgFontStyleName.value
 
     property string cfg_timeFormat: ""
     property alias cfg_showLocalTimezone: showLocalTimeZone.checked
@@ -294,7 +301,14 @@ KCMUtils.SimpleKCM {
                 checked: !cfg_autoFontAndSize
                 onClicked: {
                     if (cfg_fontFamily === "") {
-                        fontDialog.fontChosen = Kirigami.Theme.defaultFont
+                        const df = Kirigami.Theme.defaultFont
+                        cfgFontFamily.value    = df.family
+                        cfgFontWeight.value    = df.weight
+                        cfgBoldText.value      = df.bold
+                        cfgItalicText.value    = df.italic
+                        cfgFontStyleName.value = df.styleName
+                        cfgFontSize.value      = df.pointSize
+                        fontDialog.fontChosen = df
                     }
                 }
             }
@@ -317,7 +331,7 @@ KCMUtils.SimpleKCM {
             QQC2.Label {
                 visible: manualFontAndSizeRadioButton.checked
                 Layout.leftMargin: manualFontAndSizeRadioButton.indicator.width + manualFontAndSizeRadioButton.spacing
-                text: i18nc("@info %1 is the font size, %2 is the font family", "%1pt %2", cfg_fontSize, fontDialog.fontChosen.family)
+                text: i18nc("@info %1 is the font size, %2 is the font family", "%1pt %2", cfg_fontSize, cfgFontFamily.value)
                 textFormat: Text.PlainText
                 font: fontDialog.fontChosen
             }
@@ -342,9 +356,24 @@ KCMUtils.SimpleKCM {
         modality: Qt.WindowModal
         parentWindow: appearancePage.Window.window
 
-        property font fontChosen: null
+        // fontChosen is only used for the preview label and to re-open dialog at current selection.
+        // Actual cfg_* values are stored in QtObject intermediaries above.
+        property font fontChosen: Qt.font({
+            family:    cfgFontFamily.value !== "" ? cfgFontFamily.value : Qt.application.font.family,
+            pointSize: cfgFontSize.value > 0     ? cfgFontSize.value   : Qt.application.font.pointSize,
+            weight:    cfgFontWeight.value > 0   ? cfgFontWeight.value : Qt.application.font.weight,
+            italic:    cfgItalicText.value,
+            styleName: cfgFontStyleName.value
+        })
 
         onAccepted: {
+            cfgFontFamily.value    = font.family
+            cfgFontWeight.value    = font.weight
+            cfgBoldText.value      = font.bold
+            cfgItalicText.value    = font.italic
+            cfgFontStyleName.value = font.styleName
+            cfgFontSize.value      = font.pointSize
+            // Keep fontChosen in sync for the preview label
             fontChosen = font
         }
     }
