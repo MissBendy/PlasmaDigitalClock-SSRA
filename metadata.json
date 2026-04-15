@@ -6,7 +6,7 @@
                 "Name": "MissBendy"
             }
         ],
-        "BugReportUrl": "https://github.com/MissBendy/PlasmaDigitalClockSameSize/issues",
+        "BugReportUrl": "https://github.com/MissBendy/PlasmaDigitalClock-SSRA/issues",
         "Category": "Date and Time",
         "Description": "Modification of the original KDE DigitalClock widget.",
         "Icon": "preferences-system-time",
