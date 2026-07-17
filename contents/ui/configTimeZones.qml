@@ -126,7 +126,7 @@ Kirigami.PageRow {
                 sourceModel: timeZones
                 onlyShowChecked: true
             }
-            // We have no concept of selection in this list, so don't pre-select
+            // We have no concept of selection in this list, so don't preselect
             // the first item
             currentIndex: -1
 
@@ -206,7 +206,7 @@ Kirigami.PageRow {
                     required property string section
 
                     width: configuredTimeZoneList.width
-                    label: section === "true" ? i18n("Systemwide Time Zone") : i18n("Additional Time Zones")
+                    text: section === "true" ? i18n("Systemwide Time Zone") : i18n("Additional Time Zones")
                 }
             }
 

@@ -24,22 +24,15 @@ KCMUtils.SimpleKCM {
     id: appearancePage
     property alias cfg_autoFontAndSize: autoFontAndSizeRadioButton.checked
 
-    // Use QtObject intermediaries instead of aliasing into font sub-properties.
-    // In Qt6, property alias into sub-properties of a font value type is unreliable --
-    // notifications don't propagate, so cfg_* values never actually update.
-    QtObject { id: cfgFontFamily;    property string value: "" }
-    QtObject { id: cfgFontWeight;    property int    value: Qt.application.font.weight }
-    QtObject { id: cfgFontSize;      property int    value: Qt.application.font.pointSize }
-    QtObject { id: cfgBoldText;      property bool   value: false }
-    QtObject { id: cfgItalicText;    property bool   value: false }
-    QtObject { id: cfgFontStyleName; property string value: "" }
-
-    property alias cfg_fontFamily:    cfgFontFamily.value
-    property alias cfg_fontWeight:    cfgFontWeight.value
-    property alias cfg_fontSize:      cfgFontSize.value
-    property alias cfg_boldText:      cfgBoldText.value
-    property alias cfg_italicText:    cfgItalicText.value
-    property alias cfg_fontStyleName: cfgFontStyleName.value
+    // boldText and fontStyleName are not used in DigitalClock.qml
+    // However, they are necessary to remember the exact font style chosen.
+    // Otherwise, when the user open the font dialog again, the style will be lost.
+    property alias cfg_fontFamily: fontDialog.fontChosen.family
+    property alias cfg_boldText: fontDialog.fontChosen.bold
+    property alias cfg_italicText: fontDialog.fontChosen.italic
+    property alias cfg_fontWeight: fontDialog.fontChosen.weight
+    property alias cfg_fontStyleName: fontDialog.fontChosen.styleName
+    property alias cfg_fontSize: fontDialog.fontChosen.pointSize
 
     property string cfg_timeFormat: ""
     property alias cfg_showLocalTimezone: showLocalTimeZone.checked
@@ -80,7 +73,7 @@ KCMUtils.SimpleKCM {
                     i18n("Always beside time"),
                     i18n("Always below time"),
                 ]
-                onActivated: cfg_dateDisplayFormat = currentIndex
+                onActivated: appearancePage.cfg_dateDisplayFormat = currentIndex
             }
         }
 
@@ -97,7 +90,7 @@ KCMUtils.SimpleKCM {
                 i18nc("@option:check", "Only in the tooltip"),
                 i18n("Always"),
             ]
-            onActivated: cfg_showSeconds = currentIndex;
+            onActivated: appearancePage.cfg_showSeconds = currentIndex;
         }
 
         Item {
@@ -139,11 +132,11 @@ KCMUtils.SimpleKCM {
                     i18n("City"),
                     i18n("Offset from UTC time"),
                 ]
-                onActivated: cfg_displayTimezoneFormat = currentIndex
+                onActivated: appearancePage.cfg_displayTimezoneFormat = currentIndex
             }
             QQC2.Button {
                 id: switchTimeZoneButton
-                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth, dateExampleLabel.implicitWidth)
+                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth)
                 visible: KConfig.KAuthorized.authorizeControlModule("kcm_clock")
                 text: i18nc("@action:button opens kcm", "Switch Time Zone…")
                 icon.name: "preferences-system-time"
@@ -168,13 +161,13 @@ KCMUtils.SimpleKCM {
                     i18nc("@item:inlistbox time display option", "Use region defaults"),
                     i18nc("@item:inlistbox time display option", "24-Hour")
                 ]
-                onActivated: cfg_use24hFormat = currentIndex
+                onActivated: appearancePage.cfg_use24hFormat = currentIndex
             }
 
             QQC2.Button {
                 id: changeRegionalSettingsButton
                 visible: KConfig.KAuthorized.authorizeControlModule("kcm_regionandlang")
-                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth, dateExampleLabel.implicitWidth)
+                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth)
                 text: i18nc("@action:button opens kcm", "Change Regional Settings…")
                 icon.name: "preferences-desktop-locale"
                 onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_regionandlang")
@@ -224,7 +217,7 @@ KCMUtils.SimpleKCM {
                         },
                     },
                 ]
-                onActivated: cfg_dateFormat = model[currentIndex]["name"];
+                onActivated: appearancePage.cfg_dateFormat = model[currentIndex]["name"];
 
                 Component.onCompleted: {
                     const isConfiguredDateFormat = item => item["name"] === Plasmoid.configuration.dateFormat;
@@ -234,10 +227,18 @@ KCMUtils.SimpleKCM {
 
             QQC2.Label {
                 id: dateExampleLabel
-                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth, dateExampleLabel.implicitWidth)
+                Layout.preferredWidth: Math.max(changeRegionalSettingsButton.implicitWidth, switchTimeZoneButton.implicitWidth)
+                elide: Text.ElideRight
                 horizontalAlignment: Text.AlignHCenter
                 textFormat: Text.PlainText
                 text: dateFormat.model[dateFormat.currentIndex].formatter(new Date());
+                QQC2.ToolTip.text: text
+                QQC2.ToolTip.visible: (exampleHoverHandler.hovered || activeFocus) && implicitWidth > width
+                // no ToolTip.delay, this is an edge case and we might as well show it immediately if it applies
+
+                HoverHandler {
+                    id: exampleHoverHandler
+                }
             }
         }
 
@@ -245,13 +246,13 @@ KCMUtils.SimpleKCM {
             id: customDateFormat
             Layout.fillWidth: true
             enabled: showDate.checked
-            visible: cfg_dateFormat === "custom"
+            visible: appearancePage.cfg_dateFormat === "custom"
         }
 
         QQC2.Label {
             text: i18n("<a href=\"https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method\">Time Format Documentation</a>")
             enabled: showDate.checked
-            visible: cfg_dateFormat === "custom"
+            visible: appearancePage.cfg_dateFormat === "custom"
             wrapMode: Text.Wrap
 
             Layout.preferredWidth: Layout.maximumWidth
@@ -262,6 +263,7 @@ KCMUtils.SimpleKCM {
             }
 
             onLinkActivated: link => Qt.openUrlExternally(link)
+            textFormat: Text.StyledText
         }
 
         Item {
@@ -298,17 +300,10 @@ KCMUtils.SimpleKCM {
             QQC2.RadioButton {
                 id: manualFontAndSizeRadioButton
                 text: i18nc("@option:radio setting for manually configuring the font settings", "Manual")
-                checked: !cfg_autoFontAndSize
+                checked: !appearancePage.cfg_autoFontAndSize
                 onClicked: {
-                    if (cfg_fontFamily === "") {
-                        const df = Kirigami.Theme.defaultFont
-                        cfgFontFamily.value    = df.family
-                        cfgFontWeight.value    = df.weight
-                        cfgBoldText.value      = df.bold
-                        cfgItalicText.value    = df.italic
-                        cfgFontStyleName.value = df.styleName
-                        cfgFontSize.value      = df.pointSize
-                        fontDialog.fontChosen = df
+                    if (appearancePage.cfg_fontFamily === "") {
+                        fontDialog.fontChosen = Kirigami.Theme.defaultFont
                     }
                 }
             }
@@ -331,7 +326,7 @@ KCMUtils.SimpleKCM {
             QQC2.Label {
                 visible: manualFontAndSizeRadioButton.checked
                 Layout.leftMargin: manualFontAndSizeRadioButton.indicator.width + manualFontAndSizeRadioButton.spacing
-                text: i18nc("@info %1 is the font size, %2 is the font family", "%1pt %2", cfg_fontSize, cfgFontFamily.value)
+                text: i18nc("@info %1 is the font size, %2 is the font family", "%1pt %2", cfg_fontSize, fontDialog.fontChosen.family)
                 textFormat: Text.PlainText
                 font: fontDialog.fontChosen
             }
@@ -356,24 +351,9 @@ KCMUtils.SimpleKCM {
         modality: Qt.WindowModal
         parentWindow: appearancePage.Window.window
 
-        // fontChosen is only used for the preview label and to re-open dialog at current selection.
-        // Actual cfg_* values are stored in QtObject intermediaries above.
-        property font fontChosen: Qt.font({
-            family:    cfgFontFamily.value !== "" ? cfgFontFamily.value : Qt.application.font.family,
-            pointSize: cfgFontSize.value > 0     ? cfgFontSize.value   : Qt.application.font.pointSize,
-            weight:    cfgFontWeight.value > 0   ? cfgFontWeight.value : Qt.application.font.weight,
-            italic:    cfgItalicText.value,
-            styleName: cfgFontStyleName.value
-        })
+        property font fontChosen: null
 
         onAccepted: {
-            cfgFontFamily.value    = font.family
-            cfgFontWeight.value    = font.weight
-            cfgBoldText.value      = font.bold
-            cfgItalicText.value    = font.italic
-            cfgFontStyleName.value = font.styleName
-            cfgFontSize.value      = font.pointSize
-            // Keep fontChosen in sync for the preview label
             fontChosen = font
         }
     }
