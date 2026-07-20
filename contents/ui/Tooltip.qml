@@ -52,9 +52,9 @@ Item {
         id: mainLayout
 
         anchors {
-            left: parent.left
+            horizontalCenter: parent.horizontalCenter
             top: parent.top
-            margins: Kirigami.Units.largeSpacing
+            topMargin: Kirigami.Units.largeSpacing
         }
 
         spacing: 0
@@ -62,8 +62,10 @@ Item {
         Kirigami.Heading {
             id: tooltipMaintext
 
+            Layout.fillWidth: true
             Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
+            horizontalAlignment: Text.AlignHCenter
 
             level: 3
             elide: Text.ElideRight
@@ -80,8 +82,10 @@ Item {
         PlasmaComponents.Label {
             id: tooltipSubtext
 
+            Layout.fillWidth: true
             Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
+            horizontalAlignment: Text.AlignHCenter
             maximumLineCount: 2
             wrapMode: Text.Wrap
 
@@ -103,81 +107,92 @@ Item {
 
         PlasmaComponents.Label {
             id: tooltipSubLabelText
+            Layout.fillWidth: true
             Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
+            horizontalAlignment: Text.AlignHCenter
             text: (root.fullRepresentationItem as CalendarView)?.monthView.todayAuxilliaryText ?? ""
             textFormat: Text.PlainText
             opacity: 0.75
             visible: !clocks.visible && text.length > 0
         }
 
-        GridLayout {
-            id: clocks
+        Item {
+            id: clocksWrapper
 
-            Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
+            Layout.fillWidth: true
+            Layout.minimumWidth: Math.min(clocks.implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
-            Layout.minimumHeight: childrenRect.height
+            implicitHeight: clocks.implicitHeight
             visible: timeZoneRepeater.count > 0 && tooltipMaintext.anyTimezoneSet
-            columns: 2
-            rowSpacing: 0
 
-            Repeater {
-                id: timeZoneRepeater
+            GridLayout {
+                id: clocks
 
-                model: root.selectedTimeZonesDeduplicatingExplicitLocalTimeZone()
-                    // Duplicate each entry, because that's how we do "tables" with 2 columns in QML. :-\
-                    // An alternative would be a nested Repeater with an ObjectModel.
-                    .reduce((array, item) => {
-                        array.push(item, item);
-                        return array;
-                    }, [])
+                anchors.horizontalCenter: parent.horizontalCenter
+                columns: 2
+                rowSpacing: 0
 
-                PlasmaComponents.Label {
-                    id: label
-                    required property int index
-                    required property string modelData
+                Repeater {
+                    id: timeZoneRepeater
 
-                    readonly property string tzLabel: {
-                        switch (Plasmoid.configuration.displayTimezoneFormat) {
-                        case 0: // Code
-                            return tzClock.timeZoneCode;
-                        case 1: // City
-                            return TimeZonesI18n.i18nCity(tzClock.timeZone);
-                        case 2: // Offset from UTC time
-                            return tzClock.timeZoneOffset;
+                    model: root.selectedTimeZonesDeduplicatingExplicitLocalTimeZone()
+                        // Duplicate each entry, because that's how we do "tables" with 2 columns in QML. :-\
+                        // An alternative would be a nested Repeater with an ObjectModel.
+                        .reduce((array, item) => {
+                            array.push(item, item);
+                            return array;
+                        }, [])
+
+                    PlasmaComponents.Label {
+                        id: label
+                        required property int index
+                        required property string modelData
+
+                        readonly property string tzLabel: {
+                            switch (Plasmoid.configuration.displayTimezoneFormat) {
+                            case 0: // Code
+                                return tzClock.timeZoneCode;
+                            case 1: // City
+                                return TimeZonesI18n.i18nCity(tzClock.timeZone);
+                            case 2: // Offset from UTC time
+                                return tzClock.timeZoneOffset;
+                            }
                         }
-                    }
 
-                    // Layout.fillWidth is buggy here
-                    Layout.alignment: index % 2 === 0 ? Qt.AlignRight : Qt.AlignLeft
-                    text: index % 2 === 0
-                        ? i18nc("@label %1 is a city or time zone name", "%1:", tzLabel)
-                        : formatTime(tzClock.dateTime, Plasmoid.configuration.showSeconds > 0) + formatOffset(tzClock.dateTime)
-                    Clock {
-                        id: tzClock
-                        timeZone: label.modelData
-                        trackSeconds: Plasmoid.configuration.showSeconds
-                    }
-
-                    textFormat: Text.PlainText
-
-                    font.weight: tzClock.timeZone == root.currentTimeZone ? Font.Bold : Font.Normal
-                    font.features: {
-                        if (index % 2 === 1) {
-                            return { "tnum": 1 }
-                        } else {
-                            return {}
+                        // Layout.fillWidth is buggy here
+                        Layout.alignment: index % 2 === 0 ? Qt.AlignRight : Qt.AlignLeft
+                        text: index % 2 === 0
+                            ? i18nc("@label %1 is a city or time zone name", "%1:", tzLabel)
+                            : formatTime(tzClock.dateTime, Plasmoid.configuration.showSeconds > 0) + formatOffset(tzClock.dateTime)
+                        Clock {
+                            id: tzClock
+                            timeZone: label.modelData
+                            trackSeconds: Plasmoid.configuration.showSeconds
                         }
+
+                        textFormat: Text.PlainText
+
+                        font.weight: tzClock.timeZone == root.currentTimeZone ? Font.Bold : Font.Normal
+                        font.features: {
+                            if (index % 2 === 1) {
+                                return { "tnum": 1 }
+                            } else {
+                                return {}
+                            }
+                        }
+                        wrapMode: Text.NoWrap
+                        elide: Text.ElideNone
                     }
-                    wrapMode: Text.NoWrap
-                    elide: Text.ElideNone
                 }
             }
         }
 
         PlasmaComponents.Label {
+            Layout.fillWidth: true
             Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
+            horizontalAlignment: Text.AlignHCenter
             visible: ApplicationIntegration.calendarInstalled
             text: i18nc("@info:tooltip %1 is the name of a calendar application", "Middle-click to open %1", ApplicationIntegration.calendarApplicationName)
             textFormat: Text.PlainText
